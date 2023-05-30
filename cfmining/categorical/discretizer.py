@@ -1,41 +1,65 @@
 import pandas as pd
+import numpy as np
 from scipy.stats import beta
 
 from typing import Union, List, Optional
 
+__all__ = ['CategoricalDiscretizer']
 
-class CategoricalDiscretizerMixIn:
-    """ MixIn class for Categorical Discretizer implementations.
+class CategoricalDiscretizer(object):
+    """Discretize categorical features into ordinal indexes.
+    
+    :param X: a Dataframe.
+    :param categorical_columns: list of categorical columns' names.
     """
     _category_index_dict = {}
     
+    def __init__(self,
+                 df: Union[pd.DataFrame, np.ndarray],
+                 categorical_columns: List[str],
+                 names: Optional[List[str]]=None
+    ) -> None:
+        
+        assert isinstance(df, (pd.DataFrame, np.ndarray))
+        assert len(categorical_columns) > 0
+        
+        self.categorical_columns = categorical_columns
+        self._is_array = isinstance(df, np.ndarray)
+        
+        if self._is_array:
+            assert isinstance(names, list)
+            assert len(names) > 0
+            self.X = pd.DataFrame(data=df, columns=names)
+        
+        else:
+            self.X = df
+            
+    def transform(self, *args, **kwargs):
+        return self._categorical_discretizer(*args, **kwargs)
+    
     def _categorical_discretizer(
         self,
-        X: pd.DataFrame,
-        categorical_columns: List[str],
         target: pd.Series,
-        inplace: bool=False,
-        *args,
-        **kwargs) -> Optional[pd.DataFrame]:
+        inplace: bool=False
+        ) -> Optional[pd.DataFrame]:
         
         """
-        :param X: a Dataframe.
-        :param categorical_columns: list of categorical columns' names.
         :param target: a Series that drives the discretization.
         :param inplace: whether is to return a transformed copy of the dataframe or to change it inplace.
         
         :raises ValueError: not expected datatype.
         """
 
-        assert isinstance(X, pd.DataFrame)
         assert isinstance(target, pd.Series)
-        assert target.shape[0] == X.shape[0]
+        assert target.shape[0] == self.X.shape[0]
 
         if not inplace:
-          X = X.copy()         
-        X[categorical_columns] = X[categorical_columns].apply(lambda x: self._apply_discretizer(x, target))
-    
-        return X if not inplace else None
+          self.X = self.X.copy()         
+        self.X[self.categorical_columns] = self.X[self.categorical_columns].apply(lambda x: self._apply_discretizer(x, target))
+
+        self.X = self.X.values if self._is_array else self.X
+      
+        return self.X if not inplace else None
 
     def _apply_discretizer(self, X: pd.Series, target: pd.Series) -> pd.Series:
 
