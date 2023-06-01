@@ -15,27 +15,57 @@ class CategoricalDiscretizer(object):
     _category_index_dict = {}
     
     def __init__(self,
-                 df: Union[pd.DataFrame, np.ndarray],
-                 categorical_columns: List[str],
+                 categorical_columns: Union[str, List[str]],
                  names: Optional[List[str]]=None
     ) -> None:
         
-        assert isinstance(df, (pd.DataFrame, np.ndarray))
         assert len(categorical_columns) > 0
         
         self.categorical_columns = categorical_columns
-        self._is_array = isinstance(df, np.ndarray)
-        
-        if self._is_array:
-            assert isinstance(names, list)
-            assert len(names) > 0
-            self.X = pd.DataFrame(data=df, columns=names)
-        
-        else:
-            self.X = df
+        self.names = names
             
     def transform(self, *args, **kwargs):
-        return self._categorical_discretizer(*args, **kwargs)
+        
+        
+        return self.category_to_index(*args, **kwargs)
+    
+    def fit(self, 
+            X: Union[pd.DataFrame, np.ndarray],
+            y: Union[pd.Series, np.ndarray],
+            **kwargs) -> None:
+        
+        assert isinstance(X, (pd.DataFrame, np.ndarray)) 
+        self._is_array = isinstance(X, np.ndarray)
+        
+        if self._is_array:
+            assert isinstance(self.names, list)
+            assert len(self.names) > 0
+            self.X = pd.DataFrame(data=X, columns=self.names)
+        
+        else:
+            self.X = X
+            
+        self._categorical_discretizer(y, **kwargs)
+    
+    def fit_transform(self,
+                      X: Union[pd.DataFrame, np.ndarray],
+                      y: Union[pd.Series, np.ndarray],
+                      **kwargs) -> Union[pd.DataFrame, np.ndarray]:
+        
+        assert isinstance(X, (pd.DataFrame, np.ndarray)) 
+        self._is_array = isinstance(X, np.ndarray)
+        
+        if self._is_array:
+            assert isinstance(self.names, list)
+            assert len(self.names) > 0
+            self.X = pd.DataFrame(data=X, columns=self.names)
+        
+        else:
+            self.X = X
+            
+        self.fit(X, y, **kwargs)
+        
+        return self.X
     
     def _categorical_discretizer(
         self,
@@ -79,25 +109,19 @@ class CategoricalDiscretizer(object):
 
         _categorical_index = _categories_corrected_mean.sort_values().rank().astype(int)
         self._category_index_dict[_cat] = _categorical_index.to_dict()
+        self._index_to_category_dict[_cat] = {k:v for v, k in self._category_index_dict[_cat].items()}
         
         X = _X.replace(_categorical_index)[_cat]
         
         return X
     
     def category_to_index(self, X: pd.DataFrame) -> pd.DataFrame:
-        _cat = X.name 
         
-        assert _cat in self._category_index_dict
-        return X.replace(self._category_index_dict[_cat])
+        return X.replace(self._category_index_dict)
     
     def index_to_category(self, X: pd.DataFrame) -> pd.DataFrame:
         """ Use the class attribute `_category_index_dict` to revert the 
         index to category. 
         """
-        _cat = X.name 
         
-        assert _cat in self._category_index_dict
-        return X.replace(
-            to_replace=self._category_index_dict[_cat].values(),
-            value=self._category_index_dict[_cat].keys()
-        )
+        return X.replace(self._index_to_category_dict)
