@@ -51,17 +51,6 @@ class CategoricalDiscretizer(object):
                       X: Union[pd.DataFrame, np.ndarray],
                       y: Union[pd.Series, np.ndarray],
                       **kwargs) -> Union[pd.DataFrame, np.ndarray]:
-        
-        assert isinstance(X, (pd.DataFrame, np.ndarray)) 
-        self._is_array = isinstance(X, np.ndarray)
-        
-        if self._is_array:
-            assert isinstance(self.names, list)
-            assert len(self.names) > 0
-            self.X = pd.DataFrame(data=X, columns=self.names)
-        
-        else:
-            self.X = X
             
         self.fit(X, y, **kwargs)
         
