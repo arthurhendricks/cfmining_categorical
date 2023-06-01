@@ -609,7 +609,7 @@ class ActionSet(object):
         :param df: pandas.DataFrame containing features as columns and samples as rows (must contain at least 1 row and 1 column)
         :param X: numpy matrix containing features as columns and samples as rows  (must contain at least 1 row and 1 column)
         :param names: list of strings containing variable names when X is array-like
-        :params categorical_names: list of strings or integers containing variable names or indexes for the categorical data in the df.
+        :params categorical_names: 'auto' or list of strings or integers containing variable names or indexes for the categorical data in the df.
         :param custom_bounds: dictionary of custom bounds
         :param default_bounds: tuple containing information for default bounds
                                 - (lb, ub, type) where type = 'percentile' or 'absolute';
@@ -634,10 +634,17 @@ class ActionSet(object):
         assert len(names) == len(set(names)), 'elements of `names` must be distinct'
 
         if categorical_names:
-            self._categorical_discretizer = CategoricalDiscretizer(X, 
-                                                                   categorical_columns=categorical_names,
+            if isinstance(categorical_names, str):
+                if categorical_names == 'auto':
+                    categorical_names = [i for i, column in enumerate(X.T) if isinstance(column[0], str)]
+                else:
+                    raise ValueError(f"categorical_names when string it must be 'auto', got '{categorical_names}'")
+            if isinstance(categorical_names[0], int):
+                categorical_names = [names[i] for i in categorical_names]
+                
+            self._categorical_discretizer = CategoricalDiscretizer(categorical_columns=categorical_names,
                                                                    names=names)
-            X = self._categorical_discretizer.transform(y)
+            X = self._categorical_discretizer.fit_transform(X,y)
         
         # validate X
         xdim = X.shape
