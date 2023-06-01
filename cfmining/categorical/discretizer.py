@@ -26,8 +26,11 @@ class CategoricalDiscretizer(object):
             
     def transform(self, *args, **kwargs):
         
-        
         return self.category_to_index(*args, **kwargs)
+    
+    def inverse_transform(self, *args, **kwargs):
+        
+        return self.index_to_category(*args, **kwargs)
     
     def fit(self, 
             X: Union[pd.DataFrame, np.ndarray],
