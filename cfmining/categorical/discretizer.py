@@ -107,13 +107,13 @@ class CategoricalDiscretizer(object):
         
         return X
     
-    def category_to_index(self, X: pd.DataFrame) -> pd.DataFrame:
+    def category_to_index(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         
-        return X.replace(self._category_index_dict)
+        return X.replace(self._category_index_dict, **kwargs)
     
-    def index_to_category(self, X: pd.DataFrame) -> pd.DataFrame:
+    def index_to_category(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """ Use the class attribute `_category_index_dict` to revert the 
         index to category. 
         """
         
-        return X.replace(self._index_to_category_dict)
+        return X.replace(self._index_to_category_dict, **kwargs)
