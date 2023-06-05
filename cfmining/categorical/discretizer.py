@@ -13,6 +13,7 @@ class CategoricalDiscretizer(object):
     :param categorical_columns: list of categorical columns' names.
     """
     _category_index_dict = {}
+    _index_to_category_dict = {}
     
     def __init__(self,
                  categorical_columns: Union[str, List[str]],
