@@ -58,7 +58,8 @@ def buildTable(enumerator, pivot, criteria, names=None,
         else:
             overview['C'+str(idx+1)] = act
     
-    overview = enumerator.action_set.index_to_category(overview.T).T
+    if hasattr(enumerator.action_set, "_categorical_discretizer"): 
+        overview = enumerator.action_set._categorical_discretizer.index_to_category(overview.T).T
     return overview
 
 class FeatureImportance():
