@@ -4,7 +4,7 @@ from prettytable import PrettyTable
 from recourse.helper_functions import parse_classifier_args
 from scipy.stats import gaussian_kde as kde
 from scipy.interpolate import interp1d
-
+from cfmining.categorical import CategoricalDiscretizer
 from cfmining.action_set_helper import parse_forest
 
 # todo: replace percentiles with scikit-learn API
@@ -604,11 +604,12 @@ class ActionSet(object):
     _default_bounds = (1, 99, 'percentile')
     _default_step_type = 'relative'
 
-    def __init__(self, X, names = None, **kwargs):
+    def __init__(self, X, names = None, categorical_names = None, y = None, **kwargs):
         """
         :param df: pandas.DataFrame containing features as columns and samples as rows (must contain at least 1 row and 1 column)
         :param X: numpy matrix containing features as columns and samples as rows  (must contain at least 1 row and 1 column)
         :param names: list of strings containing variable names when X is array-like
+        :params categorical_names: 'auto' or list of strings or integers containing variable names or indexes for the categorical data in the df.
         :param custom_bounds: dictionary of custom bounds
         :param default_bounds: tuple containing information for default bounds
                                 - (lb, ub, type) where type = 'percentile' or 'absolute';
@@ -632,6 +633,19 @@ class ActionSet(object):
         assert all([len(n) > 0 for n in names]), 'elements of `names` must have at least 1 character'
         assert len(names) == len(set(names)), 'elements of `names` must be distinct'
 
+        if categorical_names:
+            if isinstance(categorical_names, str):
+                if categorical_names == 'auto':
+                    categorical_names = [i for i, column in enumerate(X.T) if isinstance(column[0], str)]
+                else:
+                    raise ValueError(f"categorical_names when string it must be 'auto', got '{categorical_names}'")
+            if isinstance(categorical_names[0], int):
+                categorical_names = [names[i] for i in categorical_names]
+                
+            self._categorical_discretizer = CategoricalDiscretizer(categorical_columns=categorical_names,
+                                                                   names=names)
+            X = self._categorical_discretizer.fit_transform(X,y)
+        
         # validate X
         xdim = X.shape
         assert len(xdim) == 2, '`values` must be a matrix'

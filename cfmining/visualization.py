@@ -44,8 +44,8 @@ def buildTable(enumerator, pivot, criteria, names=None,
     else:
         overview = pd.DataFrame(index=names)
     
-    eita = np.array([criteria.f(act)
-                          for act in enumerator.solutions])
+    # eita = np.array([criteria.f(act) 
+    #                       for act in enumerator.solutions]) # UNUSED CODE
     
     sort_idx = np.argsort([criteria.f(act)
                           for act in enumerator.solutions])
@@ -58,6 +58,7 @@ def buildTable(enumerator, pivot, criteria, names=None,
         else:
             overview['C'+str(idx+1)] = act
     
+    overview = enumerator.action_set.index_to_category(overview.T).T
     return overview
 
 class FeatureImportance():
