@@ -622,6 +622,22 @@ class ActionSet(object):
 
         
         assert isinstance(X, (pd.DataFrame, np.ndarray)), '`X` must be pandas.DataFrame or numpy.ndarray'
+        if categorical_names:
+            assert isinstance(X, pd.DataFrame), 'If there are categorical features in `X`, it needs to be a dataframe.'
+            names = X.columns.to_list()
+            
+            if isinstance(categorical_names, str):
+                if categorical_names == 'auto':
+                    categorical_names = [i for i, column in enumerate(X) if isinstance(X[column].iloc[0], str)]
+                else:
+                    raise ValueError(f"categorical_names when string it must be 'auto', got '{categorical_names}'")
+            if isinstance(categorical_names[0], int):
+                categorical_names = [names[i] for i in categorical_names]
+                
+            self._categorical_discretizer = CategoricalDiscretizer(categorical_columns=categorical_names,
+                                                                   names=names)
+            X = self._categorical_discretizer.fit_transform(X,y)
+            
         if isinstance(X, pd.DataFrame):
             names = X.columns.tolist()
             X = X.values
@@ -633,18 +649,6 @@ class ActionSet(object):
         assert all([len(n) > 0 for n in names]), 'elements of `names` must have at least 1 character'
         assert len(names) == len(set(names)), 'elements of `names` must be distinct'
 
-        if categorical_names:
-            if isinstance(categorical_names, str):
-                if categorical_names == 'auto':
-                    categorical_names = [i for i, column in enumerate(X.T) if isinstance(column[0], str)]
-                else:
-                    raise ValueError(f"categorical_names when string it must be 'auto', got '{categorical_names}'")
-            if isinstance(categorical_names[0], int):
-                categorical_names = [names[i] for i in categorical_names]
-                
-            self._categorical_discretizer = CategoricalDiscretizer(categorical_columns=categorical_names,
-                                                                   names=names)
-            X = self._categorical_discretizer.fit_transform(X,y)
         
         # validate X
         xdim = X.shape
